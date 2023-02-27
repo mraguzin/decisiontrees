@@ -13,6 +13,7 @@ import guru.nidi.graphviz.model.MutableNode;
 import guru.nidi.graphviz.model.Node;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -193,7 +194,7 @@ public class DepthFirstTree {
 
             var handledLabels = new HashSet<String>(); // needed in order to
             // avoid repeatedly reclassifying different numbers into the same
-            // bins (results in duplicate edges)
+            // bins (for speed, since we don't have to process certain subtrees)
             for (var value : valueList) {
                 String valueLabel = attributeValues.getLabel(maxAttribute, value);
                 if (handledLabels.contains(valueLabel))
@@ -393,14 +394,18 @@ public class DepthFirstTree {
         }
     }
     
+    private static int _counter = 0;
+    
     private Node recursiveDraw() {
         if (children.isEmpty())
-            return node(rootAttribute);
+            return node(rootAttribute+(_counter++)).with("label", rootAttribute);
         
-        var node = node(rootAttribute);
+        var node = node(rootAttribute+(_counter++)).with("label", rootAttribute);
         for (Map.Entry<String, DepthFirstTree> entry : children.entrySet()) {
             var child = entry.getValue();
             var label = entry.getKey();
+
+            System.out.println(rootAttribute + "->" + label);
             node = node.link(to(child.recursiveDraw()).with("label", label));
         }
         

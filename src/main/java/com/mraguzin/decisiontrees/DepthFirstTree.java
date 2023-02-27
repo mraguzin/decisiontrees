@@ -380,6 +380,7 @@ public class DepthFirstTree {
         String filename = file.getName();
         String[] pieces = filename.split("\\.");
         String graphname;
+        System.out.println("filename=" + filename);
 
         if (pieces.length == 1)
             graphname = pieces[0];
@@ -388,7 +389,7 @@ public class DepthFirstTree {
         
         var tree = graph(graphname).with(recursiveDraw());
         try {
-            Graphviz.fromGraph(tree).render(Format.PNG).toFile(file);
+            Graphviz.fromGraph(tree).render(Format.PNG).toFile(new File(graphname));
         } catch (IOException ex) {
             System.out.println("Greška pri zapisivanju slike stabla!");
         }

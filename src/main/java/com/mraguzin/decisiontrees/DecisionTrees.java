@@ -1,13 +1,5 @@
 package com.mraguzin.decisiontrees;
 
-import static guru.nidi.graphviz.attribute.Attributes.attr;
-import guru.nidi.graphviz.attribute.Color;
-import guru.nidi.graphviz.attribute.Font;
-import guru.nidi.graphviz.attribute.Rank;
-import static guru.nidi.graphviz.attribute.Rank.RankDir.LEFT_TO_RIGHT;
-import guru.nidi.graphviz.attribute.Style;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,11 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import static guru.nidi.graphviz.model.Factory.*;
-import guru.nidi.graphviz.model.Graph;
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -76,7 +64,9 @@ public class DecisionTrees {
 
         // optional chi-squared pruning
         tree.prune();
-
+        
+        tree.drawTree(new File(args[0]));
+        
         boolean prediction = tree.predict(newexample);
         System.out.print("Prediction outcome: ");
         if (prediction == true) {
@@ -84,7 +74,5 @@ public class DecisionTrees {
         } else {
             System.out.println("-");
         }
-        
-        tree.drawTree(new File("test.png"));
     }
 }

@@ -389,6 +389,7 @@ public class DepthFirstTree {
                 .with(recursiveDraw());
         try {
             Graphviz.fromGraph(tree).render(Format.PNG).toFile(new File(graphname));
+            //Graphviz.fromGraph(tree).render(Format.SVG_STANDALONE).toFile(new File(graphname));
         } catch (IOException ex) {
             System.out.println("Greška pri zapisivanju slike stabla!");
         }

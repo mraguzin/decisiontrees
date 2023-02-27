@@ -48,7 +48,7 @@ public class Helpers {
         return new BoolPair(true, classification);
     }
     
-    public static double getBinomialEntropy(double q) {
+    public static double getBooleanEntropy(double q) {
         if (q == 0 || q == 1)
             return 0;
         

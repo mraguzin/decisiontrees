@@ -364,11 +364,11 @@ public class DepthFirstTree {
                 continue;
             }
 
-            remainder += ((pk + nk) / (double) (p + n)) * Helpers.getBinomialEntropy(q);
+            remainder += ((pk + nk) / (double) (p + n)) * Helpers.getBooleanEntropy(q);
         }
 
         double q = p / (double) (p + n);
-        return Helpers.getBinomialEntropy(q) - remainder;
+        return Helpers.getBooleanEntropy(q) - remainder;
     }
     
     /**

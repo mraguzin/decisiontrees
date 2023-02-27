@@ -253,7 +253,7 @@ public class AttributeSet {
         System.out.println("p=" + nPositive + ", n=" + nNegative);
         System.out.println(values);
         
-        double goalEntropy = Helpers.getBinomialEntropy((double)nPositive / (nPositive + nNegative));
+        double goalEntropy = Helpers.getBooleanEntropy((double)nPositive / (nPositive + nNegative));
         boolean lastChange = values.get(0).y;
         double maxGain = Double.MIN_VALUE;
         double splitThreshold = Double.NaN;
@@ -298,10 +298,10 @@ public class AttributeSet {
                 double entropy = 0;
                 // left side (<=)
                 double p1 = (double)pLeft / (pLeft + nLeft);
-                entropy += (int)(pLeft + nLeft) / sampleSize * Helpers.getBinomialEntropy(p1);
+                entropy += (int)(pLeft + nLeft) / sampleSize * Helpers.getBooleanEntropy(p1);
                 // right side (>)
                 double p2 = (double)pRight / (pRight + nRight);
-                entropy += (int)(pRight + nRight) / sampleSize * Helpers.getBinomialEntropy(p2);
+                entropy += (int)(pRight + nRight) / sampleSize * Helpers.getBooleanEntropy(p2);
                 
                 double gain = goalEntropy - entropy;
                 if (gain > maxGain) {

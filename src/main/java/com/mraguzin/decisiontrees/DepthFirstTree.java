@@ -1,12 +1,26 @@
 package com.mraguzin.decisiontrees;
 
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+import static guru.nidi.graphviz.model.Factory.graph;
+import static guru.nidi.graphviz.model.Factory.mutGraph;
+import static guru.nidi.graphviz.model.Factory.mutNode;
+import static guru.nidi.graphviz.model.Factory.node;
+import static guru.nidi.graphviz.model.Link.to;
+import guru.nidi.graphviz.model.LinkTarget;
+import guru.nidi.graphviz.model.MutableGraph;
+import guru.nidi.graphviz.model.MutableNode;
+import guru.nidi.graphviz.model.Node;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 
@@ -107,6 +121,7 @@ public class DepthFirstTree {
                     + "to be equal to the number of training attributes");
         }
 
+        System.out.println("SIZE = " + children.size());
         return _predict(attributes);
     }
 
@@ -176,21 +191,29 @@ public class DepthFirstTree {
             subAttributeNames.putAll(attributeNames);
             subAttributeNames.remove(maxAttribute);
 
+            var handledLabels = new HashSet<String>(); // needed in order to
+            // avoid repeatedly reclassifying different numbers into the same
+            // bins (results in duplicate edges)
             for (var value : valueList) {
+                String valueLabel = attributeValues.getLabel(maxAttribute, value);
+                if (handledLabels.contains(valueLabel))
+                    continue;
+                
+                handledLabels.add(valueLabel);
                 var subExamples = new ArrayList<CSVRecord>();
                 for (var ex : examples) {
-                    if (attributeValues.containedIn(maxAttribute, ex.get(maxAttribute), value)) {
+                    if (attributeValues.containedIn(maxAttribute, ex.get(maxAttribute), value))
                         subExamples.add(ex);
-                    }
                 }
 
                 var subtree = new DepthFirstTree(subAttributeNames,
                         classAttribute, classifier, subExamples, attributeValues,
                         examples, statisticalSignificance);
 
-                String valueLabel = attributeValues.getLabel(maxAttribute, value);
+                //String valueLabel = attributeValues.getLabel(maxAttribute, value);
                 children.put(valueLabel, subtree); // recurse
             }
+            System.out.println("children(" + rootAttribute + ")=" + children.toString());
         }
     }
 
@@ -346,5 +369,41 @@ public class DepthFirstTree {
 
         double q = p / (double) (p + n);
         return Helpers.getBinomialEntropy(q) - remainder;
+    }
+    
+    /**
+     * Draws the decision tree using Graphviz.
+     * @param file
+     */
+    public void drawTree(File file) {
+        String filename = file.getName();
+        String[] pieces = filename.split("\\.");
+        String graphname;
+
+        if (pieces.length == 1)
+            graphname = pieces[0];
+        else
+            graphname = pieces[pieces.length - 2];
+        
+        var tree = graph(graphname).with(recursiveDraw());
+        try {
+            Graphviz.fromGraph(tree).render(Format.PNG).toFile(file);
+        } catch (IOException ex) {
+            System.out.println("Greška pri zapisivanju slike stabla!");
+        }
+    }
+    
+    private Node recursiveDraw() {
+        if (children.isEmpty())
+            return node(rootAttribute);
+        
+        var node = node(rootAttribute);
+        for (Map.Entry<String, DepthFirstTree> entry : children.entrySet()) {
+            var child = entry.getValue();
+            var label = entry.getKey();
+            node = node.link(to(child.recursiveDraw()).with("label", label));
+        }
+        
+        return node;            
     }
 }

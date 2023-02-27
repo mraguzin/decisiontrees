@@ -75,7 +75,7 @@ public class DecisionTrees {
         }
 
         // optional chi-squared pruning
-        tree.prune();
+        //tree.prune();
 
         boolean prediction = tree.predict(newexample);
         System.out.print("Prediction outcome: ");
@@ -84,5 +84,7 @@ public class DecisionTrees {
         } else {
             System.out.println("-");
         }
+        
+        tree.drawTree(new File("test.png"));
     }
 }

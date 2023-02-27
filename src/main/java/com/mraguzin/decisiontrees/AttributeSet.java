@@ -23,6 +23,8 @@ public class AttributeSet {
     private final int positives, negatives;
     private int inputCounter;
     private final int nAttributes;
+    private final static int MAX_SPLITS = 10;
+    private int attributeSplitCount;
     
     public AttributeSet(int nAttributes, int nPositives, int nNegatives) {
         this.nAttributes = nAttributes - 1; // ignore the class input attribute
@@ -144,11 +146,11 @@ public class AttributeSet {
             int bin = findBin(attribute, (Double)value);
             var list = discretisedNumericValues.get(attribute);
             if (bin == list.size() - 1)
-                return ">" + list.get(list.size()-1);
+                return ">" + list.get(list.size()-2);
             else if (bin == 0)
                 return "≤" + list.get(0);
             else
-                return list.get(bin - 1) + "–" + list.get(bin); // an [x,y> range       
+                return list.get(bin - 1) + "-" + list.get(bin); // an [x,y> range       
         }
         
         else
@@ -219,10 +221,12 @@ public class AttributeSet {
             // pre-sort the values so that the algorithm below can actually work
             // (efficiently)
             entry.getValue().sort((a, b) -> a.x.compareTo(b.x));
+            attributeSplitCount = 0;
             var splitPointList = bin(positives, negatives, entry.getValue());
 
             splitPointList.add(Double.POSITIVE_INFINITY); // to catch <last,∞>
             discretisedNumericValues.put(entry.getKey(), splitPointList);
+            System.out.println(splitPointList);
             System.out.println("Done with " + entry.getKey());
         }
     }
@@ -238,12 +242,16 @@ public class AttributeSet {
      * @return The list of "optimal" split points.
      */
     private List<Double> bin(int nPositive, int nNegative, List<Pair<Double, Boolean>> values) {
-        if (values.isEmpty())
-            return new ArrayList<>();
+        if (attributeSplitCount > MAX_SPLITS)
+            return List.of();
+        if (values.isEmpty() || nNegative + nPositive == 0)
+            return List.of();
         else if (values.size() == 1)
-            return List.of(values.get(0).x);
-        //System.out.println(values);
+            return List.of();
+            //return List.of(values.get(0).x);
+        
         System.out.println("p=" + nPositive + ", n=" + nNegative);
+        System.out.println(values);
         
         double goalEntropy = Helpers.getBinomialEntropy((double)nPositive / (nPositive + nNegative));
         boolean lastChange = values.get(0).y;
@@ -307,6 +315,9 @@ public class AttributeSet {
             }
         }
         
+        if (Double.isNaN(splitThreshold))
+            return List.of();
+        
         // recurse
         int toTheLeft = bestLb;
         int toTheRight = bestRb;
@@ -316,14 +327,14 @@ public class AttributeSet {
         List<Double> leftValues;
         List<Double> rightValues;
         try {
-            leftValues = bin(pLeftBest, nLeftBest, values.subList(0, toTheLeft+1));
+            leftValues = bin(pLeftBest, nLeftBest, values.subList(0, toTheLeft));
         } catch (IllegalArgumentException e) {
             leftValues = List.of();
         }
         
         try {
             rightValues = bin(nPositive - pLeftBest, nNegative - nLeftBest,
-                    values.subList(toTheRight+1, values.size()));
+                    values.subList(toTheRight, values.size()));
         } catch (IllegalArgumentException e) {
             rightValues = List.of();
         }
@@ -332,6 +343,7 @@ public class AttributeSet {
         splitList.addAll(leftValues);
         splitList.add(splitThreshold);
         splitList.addAll(rightValues);
+        ++attributeSplitCount;
         
         return splitList;
     }

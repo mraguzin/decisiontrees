@@ -67,7 +67,7 @@ public class DepthFirstTree {
         if (attributeValues == null) {
             getAttributeValues(allExamples, attributes); // we need all the training data up-front
             // so as to be able to construct the attribute-value sets a priori
-            // (a possible optimisation?)
+            // (possibly an optimisation?)
         } else {
             this.attributeValues = attributeValues;
         }
@@ -214,7 +214,6 @@ public class DepthFirstTree {
                 //String valueLabel = attributeValues.getLabel(maxAttribute, value);
                 children.put(valueLabel, subtree); // recurse
             }
-            System.out.println("children(" + rootAttribute + ")=" + children.toString());
         }
     }
 

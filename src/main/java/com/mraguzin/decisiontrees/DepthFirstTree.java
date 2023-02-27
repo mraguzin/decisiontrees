@@ -1,5 +1,6 @@
 package com.mraguzin.decisiontrees;
 
+import guru.nidi.graphviz.attribute.Rank;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import static guru.nidi.graphviz.model.Factory.graph;
@@ -122,7 +123,6 @@ public class DepthFirstTree {
                     + "to be equal to the number of training attributes");
         }
 
-        System.out.println("SIZE = " + children.size());
         return _predict(attributes);
     }
 
@@ -211,7 +211,6 @@ public class DepthFirstTree {
                         classAttribute, classifier, subExamples, attributeValues,
                         examples, statisticalSignificance);
 
-                //String valueLabel = attributeValues.getLabel(maxAttribute, value);
                 children.put(valueLabel, subtree); // recurse
             }
         }
@@ -386,7 +385,8 @@ public class DepthFirstTree {
         else
             graphname = pieces[pieces.length - 2];
         
-        var tree = graph(graphname).with(recursiveDraw());
+        var tree = graph(graphname).graphAttr().with(Rank.dir(Rank.RankDir.TOP_TO_BOTTOM))
+                .with(recursiveDraw());
         try {
             Graphviz.fromGraph(tree).render(Format.PNG).toFile(new File(graphname));
         } catch (IOException ex) {
@@ -397,10 +397,10 @@ public class DepthFirstTree {
     private static int _counter = 0;
     
     private Node recursiveDraw() {
-        if (children.isEmpty())
-            return node(rootAttribute+(_counter++)).with("label", rootAttribute);
-        
         var node = node(rootAttribute+(_counter++)).with("label", rootAttribute);
+        if (children.isEmpty())
+            return node; // return leaf
+        
         for (Map.Entry<String, DepthFirstTree> entry : children.entrySet()) {
             var child = entry.getValue();
             var label = entry.getKey();

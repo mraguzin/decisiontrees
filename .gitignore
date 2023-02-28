@@ -1,4 +1,5 @@
 *.csv
 *.png
 *.ods
+*.svg
 target/

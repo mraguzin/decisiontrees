@@ -1,5 +1,6 @@
 package com.mraguzin.decisiontrees;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -141,16 +142,20 @@ public class AttributeSet {
      */
     public String getLabel(String attribute, Object value) {
         if (isNumeric(attribute)) {
+            var df = DecimalFormat.getInstance();
+            df.setMaximumFractionDigits(2);
+            
             if (!(value instanceof Double))
                 value = Double.valueOf(value.toString());
             int bin = findBin(attribute, (Double)value);
             var list = discretisedNumericValues.get(attribute);
             if (bin == list.size() - 1)
-                return ">" + list.get(list.size()-2);
+                return ">" + df.format(list.get(list.size()-2));
             else if (bin == 0)
-                return "≤" + list.get(0);
+                return "≤" + df.format(list.get(0));
             else
-                return list.get(bin - 1) + "-" + list.get(bin); // an [x,y> range       
+                return df.format(list.get(bin - 1)) + 
+                        "-" + df.format(list.get(bin)); // an [x,y> range       
         }
         
         else
@@ -276,8 +281,8 @@ public class AttributeSet {
             
             if (lastChange != pair.y) {
                 Double x = pair.x;
-                //double mean = (values.get(i - 1).x + pair.x) * 0.5;
-                double mean = pair.x;
+                double mean = (values.get(i - 1).x + pair.x) * 0.5;
+                //double mean = pair.x;
                 int lb = i;
                 int j;
                 for (j = i+1; j < values.size() &&

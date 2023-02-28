@@ -51,7 +51,7 @@ public class DepthFirstTree {
     private static final int MULTIVALUE_THRESHOLD = 10; // threshold on the number
     // of different attribute values which, when crossed, causes the greedy
     // heuristic to only pick from a smaller, randomly selected subset of
-    // values (of size multivalueThreshold)
+    // values (of size MULTIVALUE_THRESHOLD)
 
     private DepthFirstTree(Map<String, Integer> attributes, String classAttribute,
             ClassDetector classifier, List<CSVRecord> allExamples,
@@ -389,7 +389,7 @@ public class DepthFirstTree {
                 .with(recursiveDraw());
         try {
             Graphviz.fromGraph(tree).render(Format.PNG).toFile(new File(graphname));
-            //Graphviz.fromGraph(tree).render(Format.SVG_STANDALONE).toFile(new File(graphname));
+            Graphviz.fromGraph(tree).render(Format.SVG_STANDALONE).toFile(new File(graphname));
         } catch (IOException ex) {
             System.out.println("Greška pri zapisivanju slike stabla!");
         }

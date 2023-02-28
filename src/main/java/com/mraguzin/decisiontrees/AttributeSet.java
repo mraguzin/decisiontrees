@@ -239,7 +239,7 @@ public class AttributeSet {
     /**
      * Transforms the numerical attribute into a categorical one. It does so by a recursive
      * partitioning process, maximizing information gain as it goes along the
-     * sorted value set. This algorithm is briefly mentioned in Russel&Norvig
+     * sorted value set. This algorithm is briefly mentioned in Russell&Norvig
      * 3rd ed. p720 and sketched <a href=https://www.saedsayad.com/supervised_binning.htm>here</a>.
      * @param nPositive Number of positive examples in the input list
      * @param nNegative Number of negative examples in the input list
@@ -303,10 +303,10 @@ public class AttributeSet {
                 double entropy = 0;
                 // left side (<=)
                 double p1 = (double)pLeft / (pLeft + nLeft);
-                entropy += (int)(pLeft + nLeft) / sampleSize * Helpers.getBooleanEntropy(p1);
+                entropy += (double)(pLeft + nLeft) / sampleSize * Helpers.getBooleanEntropy(p1);
                 // right side (>)
                 double p2 = (double)pRight / (pRight + nRight);
-                entropy += (int)(pRight + nRight) / sampleSize * Helpers.getBooleanEntropy(p2);
+                entropy += (double)(pRight + nRight) / sampleSize * Helpers.getBooleanEntropy(p2);
                 
                 double gain = goalEntropy - entropy;
                 if (gain > maxGain) {

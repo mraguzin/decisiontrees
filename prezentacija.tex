@@ -1,0 +1,224 @@
+\documentclass{beamer}
+\usepackage{graphicx}
+%\usepackage[pdftex]{hyperref}
+\usepackage[export]{adjustbox}
+\usepackage[utf8]{inputenc}
+\usepackage[croatian]{babel}
+\usepackage{amsmath,amsfonts,amsthm}
+\usepackage[backend=biber,style=numeric,sorting=ynt]{biblatex}
+\usepackage{csquotes}
+\usepackage{color}
+\usetheme[hideothersubsections]{Hannover}
+
+\addbibresource{tekst.bib}
+
+
+% \newcounter{tcnt}
+% \counterwithin{tcnt}
+\newtheorem{thm}{Teorem}
+\newtheorem{lem}[thm]{Lema}
+
+\author{Mauro Raguzin}
+\title{Učenje stabala odluke}
+\date{\today}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{O učenju stabala odluke}
+\subsection{Uvod i povijest}
+\begin{frame}
+    \begin{itemize}
+        \item Stabla odluke: jedan od najstarijih i povijesno najuspješnijih pristupa strojnog učenja
+        \item Učimo funkciju hipoteze iz vektora vrijednosti na ulazu
+        \item Vektori poprimaju vrijednosti nekog konačnog broja \emph{atributa}
+        \item Na izlazu dajemo jednu vrijednost --- \emph{odluku}
+        \item Odluka je za nas booleovska --- da ili ne ($+$ ili $-$)
+        \item Iz skupa atributa ovog problema učenja izdvajamo \emph{ciljni} atribut koji odgovara klasifikaciji primjera
+    \end{itemize}
+\end{frame}
+
+\subsection{Izražajnost i ograničenja stabala odluke}
+\begin{frame}
+Stablo odluke je ekvivalentno formuli logike sudova
+\begin{equation*}
+    Cilj\Leftrightarrow(Put_1\lor Put_2\lor\ldots),
+\end{equation*}
+gdje je svaki $Put$ konjunkcija odgovarajućih testova atributa na vektoru. Iz poznatih rezultata iz logike sudova možemo zaključiti
+da je ova formula ekvivalentna nekoj disjunktivnoj normalnoj formi, što znači da se svaka funkcija logike sudova može zapisati
+kao stablo odluke.
+
+Lako možemo zaključiti da je ovakvih stabla jednostavno previše da bi bilo moguće izgraditi garantirano optimalno stablo tj. ono
+koje reprezentira ulaze s najmanjim brojem čvorova ili najmanjom visinom. 
+\end{frame}
+
+\section{Praktična implementacija učenja}
+\begin{frame}
+Ipak, primjenom dobrih pohlepnih heurstika, moguće je dobiti sasvim razumna stabla odluke.
+\begin{itemize}
+    \item Glavni algoritam učenja je rekurzivan: podijeli-pa-vladaj+pohlepna heuristika
+    \item Možemo ga promatrati kao dubinsko pretraživanje (DFS), samo što sada \emph{dodajemo} podstabla u svakoj razini rekurzije
+    \item Ta podstabla odgovaraju svim mogućim odabirima grane s trenutnog internog čvora (atributa)
+    \item Grane do čvorova-djece predstavljaju jednu od odabranih vrijednosti tog (roditeljskog) atributa
+    \item Pri svakom silasku u novo podstablo, moramo kao skup relevantnih primjera u novom potproblemu uzeti \emph{samo} one
+primjere koji imaju odgovarajuću komponentu vektora jednaku vrijednosti odabrane grane; također, zanemarujemo odabran atribut jer on više
+ne može biti relevantan u daljnjim odlukama
+\end{itemize}
+\end{frame}
+
+\begin{frame} 
+Rekurzija jasno u nekom trenutku mora završiti, što se ovdje može dogoditi na četiri posebna načina:
+\begin{enumerate}
+    \item Ako su \emph{svi} preostali (pot)primjeri pozitivni ili negativni ($k$), tada smo gotovi s ovom granom: trenutni čvor je list s klasifikacijom $k$.
+    \item Ako nam je preostalo nekoliko pozitivnih i nekoliko negativnih primjera, odabiremo \emph{najboljeg} koji će predstavljati ovaj interni čvor;
+    korištenja mjera dobrote je objašnjena ispod.
+    \item Ako više uopće nema preostalih primjera, znači da smo iscrpili naučenu bazu i nije moguće klasificirati samo na temelju trenutnih primjera,
+    pa kao jedinu mogućnost koristimo već iskorištene primjere za učenje roditeljskog čvora: vrijednost klasifikacije ovog lista se dobiva kao većinska
+    funkcija nad (ulaznim) klasifikacijama tih primjera.
+    \item Inače, u situaciji smo gdje imamo neke preostale primjere, ali nemamo više atributa koji bi se testirali. Tada vraćamo većinsku
+    vrijednost klasifikacije \emph{preostalih} primjera.
+\end{enumerate}
+\end{frame}
+
+\subsection{Odabir najboljeg atributa za testiranje}
+\begin{frame}
+Najbolji atribut za podjelu tj. za testiranje na danom internom čvoru odabiremo pohlepno, koristeći mjeru dobitka informacije
+\begin{equation}
+        \label{gaineq}
+        Gain(A)=B\left(\frac{p}{p+n}\right)-\sum^d_{k=1}\frac{p_k+n_k}{p+n}B(\frac{p_k}{p_k+n_k}),
+    \end{equation}
+    gdje je 
+    \begin{equation*}
+        H(Cilj)=B(q)=-(q\log_2q+(1-q)\log_2(1-q)),
+    \end{equation*}
+a $p$ i $n$ su respektivno brojevi pozitivnih i negativnih primjera na ovoj razini stabla; $p_k$ i $n_k$ odgovaraju tom broju u podstablu
+u koje siđemo odabirom jedne od $d$ mogućih vrijednosti trenutnog atributa.
+
+Ovaj pristup često daje jako dobre rezultate, ali postoje određene poteškoće koje ćemo
+sada spomenuti.
+\end{frame}
+
+\subsection{Ograničenja učenja stabala odluke i moguća poboljšanja}
+\begin{frame}
+    \begin{itemize}
+        \item Jedan od glavnih problema kod učenja stabala je \emph{redundantna izražajnost} (engl.\textit{overfitting})
+        \item To je fenomen gdje stabla odluke mogu pokupiti razne,
+u stvarnosti kompletno irelevantne veze između atributa i ishoda
+\item To je tipično za skupove podataka s velikom količinom šuma te
+velikim brojem atributa, a može se donekle poboljšati povećanjem broja podataka za učenje 
+\item Postoje razne tehnike \emph{podrezivanja} koje rješavaju ovaj problem: eliminiranju
+ one unutarnje čvorove koji ne doprinose značajno odluci, počevši od listova izgrađenog stabla i penjajući
+se uz stablo. Pritom se ograničavamo na promatranje samo onih unutarnjih čvorova čija su sva djeca listovi.
+\item Ovdje se određivanje irelevantnosti radi korištenjem testova značajnosti: želimo provjeriti postoji li dovoljno
+velika vjerojatnost da nul-hipoteza vrijedi za dani atribut, koristeći poznate statističke distribucije i prag dozvoljene
+vjerojatnosti
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Još jedan problem je i baratanje s \emph{numeričkim} atributima
+        \item Do sada smo pretpostavljali da će stablo obrađivati kategoričke atribute, kod kojih ne očekujemo
+velik raspon vrijednosti; s druge strane, ako nam se na ulazu pojave atributi s domenom u proizvoljnom (recimo realnom) skupu brojeva,
+onda više ne možemo očekivati da će postupak učenja ikada uočiti sve vrijednosti takve domene
+\item Također, naivni pristup
+učenju ovakvih atributa može dovesti do jako visokih i nerazumljivih stabala: rješenje je u particioniranju domene svih
+numeričkih atributa na način da odabrane točke podjele čine diskretiziranu domenu, uz maksimizaciju dobitka informacije pri
+takvom odabiru. Tu su opet korisne pohlepne heuristike.
+    \end{itemize}
+\end{frame}
+
+\section{Opis softverskog rješenja}
+\subsection{Korištenje i struktura programa}
+\begin{frame}
+Dio ovog rada je i Java program koji implementira osnovni algoritam učenja stabala odluke kao i sva iznad spomenuta poboljšanja.
+Osnovni pristup učenju je temeljen na algoritmu iz \cite{rn}, s dodatkom koji omogućuje istovremeni rad i s kategoričkim i s
+numeričkim atributima.
+
+Ulaz programa: $\texttt{datoteka.csv}\ \texttt{vrijednost}_1\ \texttt{vrijednost}_2\ldots\ \texttt{vrijednost}_n$
+\end{frame}
+
+\subsection{Implementirane funckionalnosti}
+\begin{frame}
+Pri particioniranju numeričkih atributa se koristi \emph{segmentiranje pod nadzorom} (engl. \textit{supervised binning}),
+pristup ukratko opisan u \cite{rn} i prikazan
+u \cite{gaineq}
+\begin{itemize}
+    \item Ideja je da možemo u samo jednom prolazu kroz sve uočene numeričke vrijednosti danog atributa
+ napraviti kompletnu "optimalnu" (u pohlepnom smislu) particiju ukoliko prije početka particioniranja sortiramo sve te vrijednosti
+ \item Tada algoritam postaje jednostavan rekurzivan, podijeli-pa-vladaj zadatak pri čemu samo treba pripaziti na baratanje s duplikatima,
+ što je ipak olakšano zbog sortiranosti
+ \item Pohlepnost dolazi do izražaja na praktički jednak način kao kod računa \eqref{gaineq},
+ samo što se sada maksimizira dobitak pri odabiru točke podjele raspona vrijednosti, a ne odabira cijelog atributa
+ \item Točka podjele mora
+ ležati između dviju susjednih ali različitih klasifikacija, dakle pri prijelazu s $+$ na $-$ ili obratno
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+Objasnimo još implementaciju podrezivanja izgrađenog stabla, koja koristi $\chi^2$ distribuciju
+\begin{itemize}
+    \item Pretpostavimo da je na trenutnom čvoru stabla dostupan uzorak od $v=n+p$ primjera
+    \item Mi želimo izračunati očekivano odstupanje (pod nul-hipotezom) od stvarno izmjerenog. 
+    Dakle, za atribut ovog čvora moramo izračunati očekivani broj pozitivnih primjera $\hat{p}_k$
+ i očekivani broj negativnih primjera $\hat{n}_k$ za svih $d$ različitih vrijednosti ovog atributa ($k=1,2,\ldots,d$).
+ \item Zatim ukupno odstupanje možemo dobiti kao
+ \begin{equation*}
+    \Delta=\sum^d_{k=1}\frac{(p_k-\hat{p}_k)^2}{\hat{p}_k}+\frac{(n_k-\hat{n}_k)^2}{\hat{n}_k}
+ \end{equation*}
+jer je pod nul-hipotezom očekivana vrijednost te veličine distribuirana upravo po $\chi^2$ distribuciji s $v-1$ stupnjeva slobode
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+\item Moramo dobiti donju među odgovarajućih vrijednosti $\chi^2$ distribucije kako bismo vidjeli je li 
+naša $\Delta$ prihvatljiva; ako je premala, $p$-vrijednost je prevelika da bismo bili sigurni da nul-hipoteza ne vrijedi pa odbacujemo atribut.
+Trenutni prag $p$-vrijednosti je u programu postavljen na $0.05$, što je uobičajena vrijednost \cite{rn}.
+\item Spomenutu donju među možemo dobiti računanjem
+inverzne CDF odnosno kvantila $\chi^2$ distribucije za kumulativnu vjerojatnost $1-p$, što radimo pomoću Apache Commons Math biblioteke
+\end{itemize}
+\end{frame}
+
+\section{Primjeri}
+\subsection{Odabir restorana}
+\begin{frame}
+U \cite{rn} je dana mala tablica (12 primjera) s podacima koji odgovaraju nečijem odabiru restorana ovisno o raznim okolnostima, poput 
+razine gladi, tipu hrane koja se nudi, postoji li prethodna rezervacija itd. Primjenom izrađenog programa (koji na kraju 
+izvodi i podrezivanje stabla) na taj skup podataka dobivamo stablo sa slike \ref{restaurants}.
+\begin{figure} \label{restaurants}
+    \centering{
+        \begin{adjustbox}{minipage=\linewidth,scale=0.7}
+    \input{restaurants.pdf_tex}
+        \end{adjustbox}
+    \caption{Stablo iz primjera restorana}
+    }
+    \end{figure}
+
+\end{frame}
+\begin{frame}
+    Klasifikacija novog primjera s ulazima (alternativa?, bar?, vikend?, gladan?, gostiju?, cijena, kiša?, rezervacija?, tip,očekivano čekanje)
+    =($\top$, $\bot$, $\bot$, $\top$, puno, srednja, $\top$ , $\bot$, talijanski, $10-30$) daje negativnu predikciju.
+    
+\end{frame}
+
+
+\subsection{Zapošljavanje svježih diplomanata}
+\begin{frame}
+Sljedeći primjer koristi bazu podataka za učenje sa stranice Kaggle \cite{kaggle} kako bi predvidio hoće li se diplomant na ulazu
+(opisan u terminima predmeta studija na različitim razinama obrazovanja, ocjena tijekom cijelog školovanja, rezultata standardiziranih
+testova i sl.) moći odmah zaposliti tj. biti primljen od strane neke firme ili ne. Kako je originalan skup podataka poprilično velik i
+raznolik, rezultirajuće stablo je preveliko za prikazati ovdje, pa na slici \ref{jobs}
+ prikazujemo jedno manje stablo dobiveno na podskupu ovih primjera,
+nakon obrezivanja.
+
+\begin{figure} \label{jobs}
+    \includegraphics[scale=0.13]{jobsiana.png}
+    \caption{Stablo iz primjera zapošljavanja}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Korištena literatura}
+    \printbibliography
+\end{frame}
+\end{document}
